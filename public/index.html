@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Phone notes sync</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>Phone notes sync</h1>
+        <p class="sub">Apple Notes from an IMAP mailbox, mirrored into Postgres as they change</p>
+      </div>
+    </div>
+    <div class="live" id="live" data-state="starting">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="live-text">Connecting</span>
+    </div>
+  </header>
+
+  <section class="stats" aria-label="Sync status">
+    <div class="stat"><span class="k">Notes</span><span class="v" id="s-notes">0</span></div>
+    <div class="stat"><span class="k">Mailbox</span><span class="v" id="s-mailbox">-</span></div>
+    <div class="stat"><span class="k">UIDVALIDITY</span><span class="v mono" id="s-validity">-</span></div>
+    <div class="stat"><span class="k">Last UID</span><span class="v mono" id="s-lastuid">-</span></div>
+    <div class="stat wide"><span class="k">Last pass</span><span class="v" id="s-pass">waiting for the first pass</span></div>
+  </section>
+
+  <main class="layout">
+    <section class="list-pane" aria-label="Notes">
+      <label class="search">
+        <span class="sr">Search notes</span>
+        <input id="q" type="search" placeholder="Search titles and text" autocomplete="off">
+      </label>
+      <ul id="notes" class="notes"></ul>
+      <p id="empty" class="empty" hidden>No notes yet. Run the seeder and watch them arrive.</p>
+    </section>
+
+    <section class="reader" aria-label="Selected note">
+      <div id="reader-empty" class="reader-empty">
+        <p>Select a note to read it.</p>
+        <p class="hint">The body is rendered in a sandboxed frame: no scripts, no remote images.</p>
+      </div>
+      <article id="reader" hidden>
+        <header class="reader-head">
+          <h2 id="r-title"></h2>
+          <p class="meta" id="r-meta"></p>
+          <p class="banner" id="r-banner" hidden></p>
+        </header>
+        <iframe id="r-body" title="Note body" sandbox referrerpolicy="no-referrer"></iframe>
+        <ul class="attachments" id="r-attachments"></ul>
+      </article>
+    </section>
+
+    <aside class="activity" aria-label="Live activity">
+      <h3>Live activity</h3>
+      <ol id="activity"></ol>
+    </aside>
+  </main>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+From: notes@example.com
+Content-Type: multipart/mixed;
+	boundary="Apple-Mail=_5B1E2C3D-4A5F-4B6C-8D7E-9F0A1B2C3D4E"
+Subject: Whiteboard photo
+X-Uniform-Type-Identifier: com.apple.mail-note
+Mime-Version: 1.0 (Mac OS X Notes 4.11 \(2817.20.2\))
+Date: Wed, 15 Jul 2026 14:20:00 +0000
+X-Mail-Created-Date: Wed, 15 Jul 2026 14:05:00 +0000
+X-Universally-Unique-Identifier: 5A6B7C8D-9E0F-4A1B-8C2D-3E4F5A6B7C8D
+
+--Apple-Mail=_5B1E2C3D-4A5F-4B6C-8D7E-9F0A1B2C3D4E
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/html;
+	charset=us-ascii
+
+<html><body><div>Whiteboard photo</div><div><object type=3D"application/x-apple-msg-attachment" data=3D"cid:1F2E3D4C-board@example.com"></object></div><div>Sketch from the planning session.</div></body></html>
+--Apple-Mail=_5B1E2C3D-4A5F-4B6C-8D7E-9F0A1B2C3D4E
+Content-Disposition: inline;
+	filename=board.png
+Content-Type: image/png;
+	x-apple-part-url=1F2E3D4C-board@example.com;
+	name="board.png"
+Content-Transfer-Encoding: base64
+Content-Id: <1F2E3D4C-board@example.com>
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI
+7wAAAABJRU5ErkJggg==
+--Apple-Mail=_5B1E2C3D-4A5F-4B6C-8D7E-9F0A1B2C3D4E--
