@@ -1,5 +1,7 @@
 # phone-notes-sync
 
+[![CI](https://github.com/eranoix/phone-notes-sync/actions/workflows/ci.yml/badge.svg)](https://github.com/eranoix/phone-notes-sync/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) ![node 22.12+](https://img.shields.io/badge/node-22.12%2B-339933?logo=nodedotjs&logoColor=white) ![PostgreSQL 16](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white) ![docker compose one command](https://img.shields.io/badge/docker%20compose-one%20command-2496ED?logo=docker&logoColor=white)
+
 **Copies the notes you write on your phone into a database within seconds.**
 
 *In plain words:* Notes written on a phone usually stay locked inside the notes app. This small service watches those notes, from Apple Notes on an iPhone, and copies each one into a database within seconds of it being written, changed or deleted. Once the notes are in a database, other programs can search them, list them or build on them. It comes with a simple web page that shows the notes and a live feed of every change.
