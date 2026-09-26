@@ -24,11 +24,9 @@ function clientOptions(s: ImapSettings, extra: Partial<ImapFlowOptions> = {}): I
 }
 
 /**
- * The connection that fetches. It is separate from the IDLE connection on
- * purpose: a connection busy running a FETCH is not idling, and a server only
- * pushes EXISTS/EXPUNGE to a connection that is. With one connection, a note
- * saved on the phone during a long sync pass would wait for the next event to
- * be noticed; with two, the listener never stops listening.
+ * The connection that fetches, separate from the IDLE connection on purpose:
+ * a server only pushes EXISTS/EXPUNGE to a connection that is idling, not to
+ * one busy running a FETCH, so the listener must never run passes.
  *
  * Connected lazily and reconnected on demand: between passes it may time out,
  * and that is fine.

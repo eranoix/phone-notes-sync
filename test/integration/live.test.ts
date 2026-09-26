@@ -160,9 +160,7 @@ describe('live sync against IMAP and Postgres', () => {
     expect(before).toMatchObject({ inserted: 3 });
 
     // Recreating a mailbox is the portable way to get a new UIDVALIDITY.
-    // GreenMail derives it from the clock in whole seconds, so recreate in a
-    // later second or it keeps the old value (the planner catches that case
-    // too, through UIDNEXT, and a unit test covers it).
+    // GreenMail derives it from the clock in whole seconds, so wait a second.
     await writer.mailboxDelete(mailbox);
     await new Promise((r) => setTimeout(r, 1_100));
     await writer.mailboxCreate(mailbox);

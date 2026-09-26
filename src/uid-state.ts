@@ -55,13 +55,10 @@ export function planSync(
     return { kind: 'full', reason: 'uidvalidity-changed', resetUids: true };
   }
   if (server.uidNext <= stored.lastUid) {
-    // UIDNEXT never goes down and is always above every existing UID, so
-    // seeing it at or below a UID we already processed means the mailbox was
-    // recreated WITHOUT a new UIDVALIDITY. That is a server bug, but a real
-    // one: GreenMail derives UIDVALIDITY from a clock with one-second
-    // resolution, so a mailbox deleted and recreated within the same second
-    // keeps it. Left alone, every new message would sit below the watermark
-    // and never be fetched. Treat it exactly like a UIDVALIDITY change.
+    // UIDNEXT at or below a processed UID means the mailbox was recreated
+    // without a new UIDVALIDITY (GreenMail does this within the same second).
+    // New messages would sit below the watermark forever, so treat it exactly
+    // like a UIDVALIDITY change.
     return { kind: 'full', reason: 'uidnext-went-backwards', resetUids: true };
   }
   if (triggers.has('connect') || triggers.has('interval')) {
