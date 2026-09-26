@@ -10,7 +10,7 @@ an ordinary message in a `Notes` IMAP folder. This service sits on that folder
 with IMAP IDLE, and within a second of a note being added, edited or deleted,
 the row in Postgres follows.
 
-![The page, with a note open and the live activity feed](docs/screenshots/overview.png)
+<p align="center"><img src="docs/screenshots/01-overview.png" width="49%" alt="The page, with a note open and the live activity feed"> <img src="docs/screenshots/01-overview-dark.png" width="49%" alt="The page, with a note open and the live activity feed (dark)"></p>
 
 ```bash
 docker compose up --build        # then open http://localhost:8080
@@ -72,6 +72,11 @@ docker compose up --build
 # or: npm run demo
 ```
 
+If port 8080 is already taken on your machine, pick another one with
+`WEB_PORT=8081 docker compose up --build` (the same goes for `PG_PORT`, default
+54329, and `IMAP_PORT`, default 3143). The page follows your system's light or
+dark theme.
+
 This starts four containers: Postgres, [GreenMail](https://greenmail-mail-test.github.io/greenmail/)
 (an in-memory IMAP server built for tests, with IDLE and UIDPLUS), the sync
 service, and a seeder that plays the part of the phone. Open
@@ -88,7 +93,7 @@ and you will see the body change under you:
 
 | An edit arriving | A delete arriving |
 |---|---|
-| ![](docs/screenshots/live-edit.png) | ![](docs/screenshots/live-delete.png) |
+| <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/02-live-edit-dark.png"><img src="docs/screenshots/02-live-edit.png" alt="An edit arriving"></picture> | <picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/03-live-delete-dark.png"><img src="docs/screenshots/03-live-delete.png" alt="A delete arriving"></picture> |
 
 Things worth trying while it runs:
 
@@ -100,14 +105,16 @@ docker compose logs -f app              # watch it back off, reconnect and resyn
 
 Restarting GreenMail is a nice test: it keeps mail in memory, so it comes back
 empty with a new UIDVALIDITY. Run the seeder again and the log shows
-`reason=uidvalidity-changed`, the table keeps its rows, and the page does not
-flicker.
+`reason=uidvalidity-changed`: the notes that are back on the server are
+re-linked to their new UIDs by identity (counted as `updated`, never deleted
+and inserted again), and the ones the seeder has not written back yet are
+removed until it does.
 
 `scripts/smoke.sh` runs the whole demo headless and asserts the end state,
 including that edits and deletes were driven by IDLE events and not by the
 periodic resync. CI runs it on every push.
 
-<p align="center"><img src="docs/screenshots/mobile.png" width="300" alt="The page on a phone"></p>
+<p align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/04-mobile-dark.png"><img src="docs/screenshots/04-mobile.png" width="300" alt="The page on a phone"></picture></p>
 
 ## How it works
 
@@ -291,8 +298,9 @@ The schema is created on boot (`src/schema.ts`, every statement idempotent).
 ## Tests
 
 ```bash
+npm ci
 npm test                                   # unit: 50 tests, no services needed
-docker compose up -d postgres imap
+docker compose up -d --wait postgres imap  # --wait: Postgres must be ready first
 npm run test:integration                   # against real IMAP and Postgres
 scripts/smoke.sh                           # the compose demo, end to end
 ```
