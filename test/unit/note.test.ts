@@ -65,14 +65,14 @@ describe('parseNote: the Apple Notes MIME format', () => {
     const modifiedAt = new Date('2026-08-01T10:00:00Z');
     const src = buildNoteMessage({
       id: 'ABCDEF01-2345-4678-89AB-CDEF01234567',
-      title: 'Ação rápida',
-      html: '<div><h1>Ação rápida</h1></div><div>long line '.padEnd(300, 'x') + '</div>',
+      title: 'Naïve über-quick plan',
+      html: '<div><h1>Naïve über-quick plan</h1></div><div>long line '.padEnd(300, 'x') + '</div>',
       createdAt: new Date('2026-07-30T10:00:00Z'),
       modifiedAt,
       attachments: [{ filename: 'a.pdf', contentType: 'application/pdf', content: Buffer.from('%PDF-'), contentId: 'a@example.com' }],
     });
     const note = await parseNote(src);
-    expect(note.title).toBe('Ação rápida');
+    expect(note.title).toBe('Naïve über-quick plan');
     expect(note.html).toContain('x'.repeat(200));
     expect(note.modifiedAt).toEqual(modifiedAt);
     expect(note.attachments).toMatchObject([{ filename: 'a.pdf', contentType: 'application/pdf', size: 5, contentId: 'a@example.com' }]);
@@ -81,7 +81,7 @@ describe('parseNote: the Apple Notes MIME format', () => {
   it('gives the same content hash to the same message and a different one to an edit', async () => {
     const a = await parseNote(fixture('qp-html.eml'));
     const b = await parseNote(fixture('qp-html.eml'));
-    const edited = await parseNote(fixture('qp-html.eml').toString().replace('Flat white', 'Cortado'));
+    const edited = await parseNote(fixture('qp-html.eml').toString().replace('Flat white', 'Espresso'));
     expect(a.contentHash).toBe(b.contentHash);
     expect(edited.contentHash).not.toBe(a.contentHash);
   });
