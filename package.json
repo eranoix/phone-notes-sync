@@ -16,7 +16,8 @@
     "test": "vitest run --project unit",
     "test:integration": "vitest run --project integration",
     "demo": "docker compose up --build",
-    "demo:down": "docker compose down -v"
+    "demo:down": "docker compose down -v",
+    "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {
     "imapflow": "^2.0.7",
