@@ -1,10 +1,3 @@
-/**
- * Runs the real thing against the compose services: GreenMail over IMAP and
- * Postgres. Start them with `docker compose up -d postgres imap`.
- *
- * Every test works in its own mailbox, so it never disturbs the demo's
- * "Notes" mailbox or another test.
- */
 import { randomUUID } from 'node:crypto';
 import { ImapFlow } from 'imapflow';
 import pg from 'pg';
@@ -125,7 +118,6 @@ describe('live sync against IMAP and Postgres', () => {
       const added = await eventually(() => rows(mailbox), (r) => r.length === 2);
       expect(added.map((r) => r.title)).toEqual(['Alpha', 'Bravo']);
 
-      // Edit the way the phone does: new message with the same identity, old one expunged.
       await append(mailbox, note(a, 'Alpha', 'second draft', 3));
       await remove(mailbox, uidA);
       const edited = await eventually(() => rows(mailbox), (r) => r.some((x) => x.body_text.includes('second draft')));
@@ -136,7 +128,6 @@ describe('live sync against IMAP and Postgres', () => {
       const afterDelete = await eventually(() => rows(mailbox), (r) => r.length === 1);
       expect(afterDelete.map((r) => r.id)).toEqual([a]);
 
-      // Everything after the first pass was driven by IDLE events, never by a timer.
       expect(passes[0]).toBe('full:connect');
       expect(passes.slice(1).every((p) => !p.includes('interval'))).toBe(true);
     } finally {
@@ -159,8 +150,6 @@ describe('live sync against IMAP and Postgres', () => {
     const before = await sync.run(source, new Set(['connect']));
     expect(before).toMatchObject({ inserted: 3 });
 
-    // Recreating a mailbox is the portable way to get a new UIDVALIDITY.
-    // GreenMail derives it from the clock in whole seconds, so wait a second.
     await writer.mailboxDelete(mailbox);
     await new Promise((r) => setTimeout(r, 1_100));
     await writer.mailboxCreate(mailbox);

@@ -9,12 +9,6 @@ export interface NoteChange {
   title: string;
 }
 
-/**
- * LISTEN on the channel the notes trigger writes to, on a dedicated
- * connection (a pooled one would be handed to someone else between queries
- * and stop receiving). Reconnects with backoff; a reconnect emits 'resync' so
- * readers refetch whatever they may have missed while it was down.
- */
 export class ChangeFeed extends EventEmitter {
   private abort = new AbortController();
   private client: pg.Client | null = null;

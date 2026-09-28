@@ -13,7 +13,6 @@ describe('parseNote: the Apple Notes MIME format', () => {
     expect(note.id).toBe('0E3B6C1F-7A2D-4F4E-9B7C-2D1A5E8F9C10');
     expect(note.title).toBe('Café list');
     expect(note.html).toContain('<h1>Café list</h1>');
-    // Soft line breaks are joined and =E2=86=92 decodes to a real character.
     expect(note.html).toContain('Try the place on 5th &amp; Main');
     expect(note.text).toBe('Café list\nTry the place on 5th & Main\n\nFlat white → good');
     expect(note.modifiedAt.toISOString()).toBe('2026-07-14T12:41:07.000Z');

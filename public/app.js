@@ -1,6 +1,3 @@
-// Read-only view of the synced notes. Everything live arrives over one
-// EventSource; the list itself always comes from the JSON API, so the page
-// can never drift from what is actually in Postgres.
 const $ = (id) => document.getElementById(id);
 const els = {
   list: $('notes'), empty: $('empty'), q: $('q'),

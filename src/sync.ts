@@ -24,7 +24,6 @@ export interface FetchedMessage {
   source: Buffer;
 }
 
-/** A mailbox opened read-only for one sync pass. */
 export interface MailboxSession {
   readonly snapshot: MailboxSnapshot;
   listUids(): Promise<number[]>;
@@ -57,27 +56,13 @@ export interface MailboxSyncOptions {
   concurrency: number;
   maxAttempts: number;
   log?: Logger;
-  /** Retry delay base for transient database errors; tests set it to 0. */
   retryBaseMs?: number;
 }
 
 const FETCH_CHUNK = 250;
 
-/**
- * One sync pass over one mailbox: plan from the UID bookkeeping, fetch what
- * is new, parse and upsert through a bounded queue, then reconcile deletions.
- *
- * Fetching happens on the IMAP connection one message at a time (IMAP is a
- * single ordered stream anyway); parsing and the database write, which is
- * where the time goes, run `concurrency` at a time.
- */
 export class MailboxSync {
   private readonly log: Logger;
-  /**
-   * UIDs that will never produce a row: messages that are not notes, and older
-   * duplicates of a note that already has a newer version. Remembered per
-   * UIDVALIDITY so a full pass does not download them again every time.
-   */
   private ignored = new Set<number>();
   private ignoredValidity: number | null = null;
 
@@ -161,8 +146,6 @@ export class MailboxSync {
 
   private async listUidsChecked(session: MailboxSession): Promise<number[]> {
     const uids = await session.listUids();
-    // An empty answer for a mailbox the server just said is not empty would
-    // make deleteMissing wipe the table. Refuse it; the next pass retries.
     if (uids.length === 0 && session.snapshot.exists > 0) {
       throw new Error(`server reported ${session.snapshot.exists} messages but returned no UIDs`);
     }
@@ -188,7 +171,6 @@ export class MailboxSync {
     for (const part of chunks) {
       if (Array.isArray(part) && part.length === 0) continue;
       for await (const msg of session.fetch(part)) {
-        // `UID FETCH n:*` returns the last message even when its UID is below n.
         if (!Array.isArray(part) && filterNewUids([msg.uid], watermark).length === 0) continue;
         report.fetched++;
         await queue.waitForCapacity();
@@ -235,15 +217,6 @@ function chunk<T>(items: T[], size: number): T[][] {
   return out;
 }
 
-/**
- * Coalescing, single-flight runner. IDLE can deliver a burst of EXISTS and
- * EXPUNGE events (an edit is one of each); running a pass per event would
- * queue passes that find nothing. Instead, triggers that arrive while a pass
- * is running are merged and handled by exactly one follow-up pass.
- *
- * A failed pass keeps its triggers and is retried with backoff, so a database
- * that is briefly down delays the sync instead of dropping it.
- */
 export class SyncScheduler extends EventEmitter {
   private pending = new Set<SyncTrigger>();
   private running: Promise<void> | null = null;
@@ -265,7 +238,6 @@ export class SyncScheduler extends EventEmitter {
     this.schedule(this.options.debounceMs ?? 150);
   }
 
-  /** Resolves when no pass is running or scheduled. */
   async idle(): Promise<void> {
     while (this.running || this.timer) {
       if (this.running) await this.running;

@@ -1,7 +1,3 @@
-/**
- * A deliberately small logger: one line per event, key=value fields, so the
- * output reads well in `docker compose logs` and still greps cleanly.
- */
 type Level = 'debug' | 'info' | 'warn' | 'error';
 type Fields = Record<string, unknown>;
 
@@ -44,7 +40,6 @@ export function logger(scope: string): Logger {
   };
 }
 
-/** For tests: swallows everything. */
 export const silentLogger: Logger = {
   debug() {},
   info() {},

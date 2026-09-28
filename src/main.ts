@@ -110,7 +110,6 @@ async function shutdown(signal: string): Promise<void> {
   await feed.stop();
   await new Promise<void>((r) => {
     server.close(() => r());
-    // Open event streams would otherwise hold close() forever.
     server.closeAllConnections();
   });
   await pool.end();

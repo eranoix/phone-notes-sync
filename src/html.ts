@@ -1,8 +1,3 @@
-/**
- * Just enough HTML handling for note bodies: turning them into plain text for
- * search, and finding a title when the Subject header is missing. This is not
- * a sanitizer; the web page renders note HTML inside a sandboxed iframe.
- */
 const ENTITIES: Record<string, string> = {
   nbsp: ' ',
   amp: '&',
@@ -22,11 +17,9 @@ export function decodeEntities(text: string): string {
   });
 }
 
-/** Plain text with line breaks where the note had blocks. */
 export function htmlToText(html: string): string {
   const withBreaks = html
     .replace(/<(script|style)[^>]*>[\s\S]*?<\/\1>/gi, '')
-    // A run of closing block tags ends ONE line: `</h1></div>` is not a blank line.
     .replace(/(?:<\/(?:div|p|h[1-6]|li|tr|blockquote|pre|ul|ol)>\s*)+/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
     .replace(/<li[^>]*>/gi, '- ')
@@ -40,20 +33,11 @@ export function htmlToText(html: string): string {
     .trim();
 }
 
-/**
- * Apple Notes puts the title in the first block of the body and mirrors it in
- * the Subject. When the Subject is empty (some clients drop it) the first
- * non-empty line of the body is what the Notes app itself shows.
- */
 export function titleFromHtml(html: string): string | null {
   const first = htmlToText(html).split('\n').find((line) => line.length > 0);
   return first ? first.slice(0, 200) : null;
 }
 
-/**
- * A one-line preview for list views: the body without the line that repeats
- * the title, list markers dropped, lines joined with a middle dot.
- */
 export function excerpt(text: string, title: string, max = 200): string {
   const lines = text.split('\n').map((l) => l.replace(/^- /, '').trim()).filter(Boolean);
   if (lines[0] === title.trim()) lines.shift();

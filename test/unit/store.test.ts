@@ -97,8 +97,8 @@ describe('NoteStore deletes and UID bookkeeping', () => {
     await db.listen('notes_changed', (payload) => events.push(JSON.parse(payload)));
     const note = await parseNote(noteSource({ id: noteId(1), title: 'hello' }));
     await store.upsert(note, at(1));
-    await store.upsert(note, at(1)); // replay: nothing
-    await store.upsert(note, at(1, 2)); // same content, new UIDVALIDITY: row updated silently
+    await store.upsert(note, at(1));
+    await store.upsert(note, at(1, 2));
     await store.deleteMissing('Notes', 2, []);
     await new Promise((r) => setTimeout(r, 20));
     expect(events.map((e) => e.op)).toEqual(['insert', 'delete']);

@@ -3,10 +3,6 @@ import { NoteStore, type Queryable } from '../../src/store.js';
 
 let shared: { store: NoteStore; db: PGlite } | null = null;
 
-/**
- * A real Postgres (compiled to WASM, in-process) with the production schema.
- * Booted once per test file, emptied before every test.
- */
 export async function freshStore(): Promise<{ store: NoteStore; db: PGlite }> {
   if (!shared) {
     const db = new PGlite();

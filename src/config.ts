@@ -1,8 +1,3 @@
-/**
- * All runtime configuration comes from the environment, parsed once at boot.
- * A missing required value stops the process with a message naming it,
- * instead of failing later with a connection error that points elsewhere.
- */
 export interface Config {
   imap: {
     host: string;
@@ -11,7 +6,6 @@ export interface Config {
     user: string;
     password: string;
     mailbox: string;
-    /** RFC 2177 asks clients to re-issue IDLE at least every 29 minutes. */
     idleRestartMs: number;
   };
   databaseUrl: string;

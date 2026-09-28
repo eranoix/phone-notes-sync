@@ -3,14 +3,8 @@ import type { ParsedNote } from './note.js';
 import { SCHEMA_SQL } from './schema.js';
 import type { StoredMailboxState } from './uid-state.js';
 
-/**
- * The only thing the store needs from a database driver. Both `pg.Pool` and
- * PGlite (an in-process Postgres used by the unit tests) satisfy it, so the
- * SQL under test is the SQL that runs in production.
- */
 export interface Queryable {
   query<R = Record<string, unknown>>(text: string, params?: unknown[]): Promise<{ rows: R[] }>;
-  /** Multi-statement execution, when the driver separates it from `query` (PGlite does). */
   exec?(text: string): Promise<unknown>;
 }
 
@@ -64,12 +58,6 @@ export class NoteStore {
     );
   }
 
-  /**
-   * Forget every UID stored for a mailbox. Called when UIDVALIDITY changes:
-   * the notes stay (their identity is the Apple UUID, not the UID), only the
-   * pointers into the old mailbox are cleared, and the full pass that follows
-   * fills them back in.
-   */
   async resetUids(mailbox: string, uidValidity: number): Promise<void> {
     await this.db.query('update notes set uid = null, uid_validity = null where mailbox = $1', [mailbox]);
     await this.saveState(mailbox, { uidValidity, lastUid: 0 });
@@ -83,18 +71,6 @@ export class NoteStore {
     return rows.map((r) => Number(r.uid));
   }
 
-  /**
-   * Insert or update a note, keyed by its Apple UUID. Safe to call any number
-   * of times with the same message, and safe under concurrency:
-   *
-   *   - Replaying the same message changes nothing (and fires no notification).
-   *   - An OLDER version never overwrites a newer one. During an edit the old
-   *     and new messages can both be on the server for a moment and may be
-   *     processed in either order; `modified_at` decides, and the higher UID
-   *     breaks a tie within the same UIDVALIDITY.
-   *   - The decision happens inside one INSERT ... ON CONFLICT, so two workers
-   *     racing on the same note are serialized by the row lock, not by luck.
-   */
   async upsert(note: ParsedNote, at: MessageLocation): Promise<UpsertResult> {
     const { rows } = await this.db.query<{ inserted: boolean }>(
       `insert into notes as n (id, mailbox, uid, uid_validity, title, html, body_text,
@@ -143,11 +119,6 @@ export class NoteStore {
     return row.inserted ? 'inserted' : 'updated';
   }
 
-  /**
-   * Delete the notes of a mailbox whose message is no longer on the server.
-   * A note that was edited is NOT deleted here: by the time this runs, the
-   * upsert has already moved it to the UID of its new message.
-   */
   async deleteMissing(mailbox: string, uidValidity: number, presentUids: number[]): Promise<string[]> {
     const { rows } = await this.db.query<{ id: string }>(
       `delete from notes

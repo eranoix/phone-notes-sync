@@ -1,10 +1,5 @@
 import { randomBytes } from 'node:crypto';
 
-/**
- * Builds a message the way Apple Notes stores a note over IMAP. Used by the
- * demo seeder and the tests, so both exercise exactly the format the parser
- * has to read in production.
- */
 export interface NoteDraft {
   id: string;
   title: string;
@@ -22,7 +17,6 @@ function encodeHeader(value: string): string {
 }
 
 function qp(text: string): string {
-  // Quoted-printable, which is what Notes uses for the HTML part.
   const bytes = Buffer.from(text, 'utf-8');
   let out = '';
   let lineLen = 0;
@@ -96,7 +90,6 @@ export function buildNoteMessage(draft: NoteDraft): Buffer {
     parts.push(
       `--${boundary}`,
       `Content-Type: ${a.contentType}; name="${a.filename}"`,
-      // Images sit inline in the note; anything else is a regular attachment.
       `Content-Disposition: ${a.contentType.startsWith('image/') ? 'inline' : 'attachment'}; filename="${a.filename}"`,
       `Content-Id: <${a.contentId}>`,
       'Content-Transfer-Encoding: base64',

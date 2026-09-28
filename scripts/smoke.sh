@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-# End-to-end check of the compose demo: bring everything up, let the seeder
-# play the phone, then assert that the adds, the edits and the delete all
-# reached Postgres through IDLE (the periodic resync is set to a minute, and
-# the seeder is done well before that).
-#
-#   scripts/smoke.sh            # leaves the stack running
-#   KEEP=0 scripts/smoke.sh     # tears it down afterwards
 set -euo pipefail
 cd "$(dirname "$0")/.."
 WEB="http://127.0.0.1:${WEB_PORT:-8080}"
@@ -14,12 +7,10 @@ docker compose up -d --build
 trap '[ "${KEEP:-1}" = 0 ] && docker compose down -v >/dev/null 2>&1 || true' EXIT
 
 echo "waiting for the seeder to finish"
-# Older Compose prints the bare exit code, newer ones a sentence ending in it.
 code=$(docker compose wait seed | grep -oE "[0-9]+$" | tail -1)
 docker compose logs seed --no-log-prefix
 [ "$code" = 0 ] || { echo "seeder failed with $code"; exit 1; }
 
-# The last change is picked up within a second or two of the seeder exiting.
 for _ in $(seq 1 30); do
   body=$(curl -fsS "$WEB/api/notes") && echo "$body" | grep -q 'Weekend ideas' && break
   sleep 1

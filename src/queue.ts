@@ -1,10 +1,5 @@
 import { backoffDelay, sleep } from './backoff.js';
 
-/**
- * Thrown by a task that must not be retried: a message that does not parse
- * will not parse on the fourth attempt either, and retrying it only delays
- * everything queued behind it.
- */
 export class PermanentError extends Error {
   override readonly name = 'PermanentError';
 }
@@ -14,11 +9,8 @@ export type TaskOutcome<T> =
   | { ok: false; error: Error; attempts: number; permanent: boolean };
 
 export interface QueueOptions {
-  /** How many tasks may run at the same time. */
   concurrency: number;
-  /** Total tries per task, the first one included. */
   maxAttempts: number;
-  /** Tasks queued or running beyond which `waitForCapacity` blocks the producer. */
   highWaterMark?: number;
   retryBaseMs?: number;
   retryMaxMs?: number;
@@ -28,15 +20,6 @@ interface Entry {
   run: () => Promise<void>;
 }
 
-/**
- * A small work queue with bounded concurrency, retries for transient errors
- * and backpressure towards the producer.
- *
- * The producer here is an IMAP FETCH streaming message sources. Without a
- * bound, a first sync of a large mailbox would open as many database writes
- * as there are messages; with it, at most `concurrency` run at once and the
- * FETCH loop pauses (via `waitForCapacity`) while the backlog is full.
- */
 export class WorkQueue {
   private readonly waiting: Entry[] = [];
   private running = 0;
@@ -53,7 +36,6 @@ export class WorkQueue {
     return this.waiting.length + this.running;
   }
 
-  /** Enqueue a task; the promise settles with its outcome and never rejects. */
   push<T>(task: (attempt: number) => Promise<T>): Promise<TaskOutcome<T>> {
     return new Promise((resolve) => {
       this.waiting.push({
@@ -63,14 +45,12 @@ export class WorkQueue {
     });
   }
 
-  /** Resolves once the backlog is below the high-water mark. */
   async waitForCapacity(): Promise<void> {
     while (this.size >= this.highWaterMark) {
       await new Promise<void>((r) => this.capacityWaiters.push(r));
     }
   }
 
-  /** Resolves when nothing is queued or running. */
   onIdle(): Promise<void> {
     if (this.size === 0) return Promise.resolve();
     return new Promise((r) => this.idleWaiters.push(r));

@@ -50,7 +50,6 @@ describe('MailboxSync', () => {
     box.append(noteSource({ id: noteId(3), title: 'n3' }));
     await run('new-messages');
     expect(box.fetchedUids).toEqual([3]);
-    // Nothing new: `3:*` would still hand back UID 3; it must not be counted again.
     box.fetchedUids = [];
     const again = await run('expunge');
     expect(again).toMatchObject({ fetched: 0, deleted: 0 });
@@ -67,12 +66,12 @@ describe('MailboxSync', () => {
   it('survives a UIDVALIDITY change without losing or re-creating notes', async () => {
     for (const n of [1, 2, 3]) box.append(noteSource({ id: noteId(n), title: `n${n}` }));
     box.append(noteSource({ id: noteId(4), title: 'n4' }));
-    box.expunge(1); // UIDs are now 2,3,4
+    box.expunge(1);
     await run('connect');
     const events: string[] = [];
     await db.listen('notes_changed', (p) => events.push(JSON.parse(p).op));
 
-    const mapping = box.rebuild(); // 2,3,4 -> 1,2,3 under a new UIDVALIDITY
+    const mapping = box.rebuild();
     const r = await run('new-messages');
     expect(r).toMatchObject({ plan: 'full', reason: 'uidvalidity-changed', deleted: 0, inserted: 0, updated: 3 });
     expect(await store.getState('Notes')).toEqual({ uidValidity: 1001, lastUid: 3 });
@@ -80,17 +79,16 @@ describe('MailboxSync', () => {
     const { rows } = await db.query<{ id: string; uid: number }>('select id, uid::int as uid from notes order by id');
     expect(rows.map((x) => x.uid)).toEqual([mapping.get(2), mapping.get(3), mapping.get(4)]);
     await new Promise((res) => setTimeout(res, 20));
-    expect(events).toEqual([]); // readers saw nothing happen, because nothing did
+    expect(events).toEqual([]);
   });
 
   it('catches a recreated mailbox whose server kept the old UIDVALIDITY', async () => {
     for (const n of [1, 2, 3]) box.append(noteSource({ id: noteId(n), title: `n${n}` }));
     await run('connect');
     box.expunge(3);
-    box.rebuild(true); // n1, n2 renumbered 1, 2 under the SAME UIDVALIDITY; UIDNEXT 3, watermark 3
+    box.rebuild(true);
     const r = await run('expunge');
     expect(r).toMatchObject({ plan: 'full', reason: 'uidnext-went-backwards', deleted: 1, lastUid: 2 });
-    // The watermark is back in step, so the next new message (UID 3 again) is not skipped.
     box.append(noteSource({ id: noteId(4), title: 'n4' }));
     expect(await run('new-messages')).toMatchObject({ plan: 'incremental', inserted: 1 });
     expect(await titles()).toEqual(['n1', 'n2', 'n4']);
@@ -166,7 +164,7 @@ describe('SyncScheduler', () => {
     s.request('expunge');
     s.request('new-messages');
     await new Promise((r) => setTimeout(r, 20));
-    s.request('new-messages'); // during the running pass
+    s.request('new-messages');
     s.request('expunge');
     release();
     await s.idle();

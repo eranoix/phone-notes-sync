@@ -1,6 +1,3 @@
-/**
- * Invented notes for the demo. Every name, place and address is made up.
- */
 const svgMap = Buffer.from(
   `<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160" viewBox="0 0 320 160">
   <rect width="320" height="160" fill="#f6f3ec"/>

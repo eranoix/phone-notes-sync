@@ -23,14 +23,6 @@ function clientOptions(s: ImapSettings, extra: Partial<ImapFlowOptions> = {}): I
   };
 }
 
-/**
- * The connection that fetches, separate from the IDLE connection on purpose:
- * a server only pushes EXISTS/EXPUNGE to a connection that is idling, not to
- * one busy running a FETCH, so the listener must never run passes.
- *
- * Connected lazily and reconnected on demand: between passes it may time out,
- * and that is fine.
- */
 export class ImapMailSource implements MailSource {
   private client: ImapFlow | null = null;
 
@@ -50,8 +42,6 @@ export class ImapMailSource implements MailSource {
 
   async open(mailbox: string): Promise<MailboxSession> {
     const client = await this.connected();
-    // EXAMINE, not SELECT: this service never changes anything in the mailbox,
-    // not even the \Seen flag.
     const lock = await client.getMailboxLock(mailbox, { readOnly: true });
     const box = client.mailbox;
     if (!box) {
@@ -77,8 +67,6 @@ export class ImapMailSource implements MailSource {
       },
       async close() {
         lock.release();
-        // Close the mailbox so the next pass EXAMINEs again and sees a fresh
-        // UIDNEXT; a mailbox left open only learns about new messages lazily.
         await client.mailboxClose().catch(() => undefined);
       },
     };
@@ -102,18 +90,6 @@ export interface ListenerStatus {
   lastError: string | null;
 }
 
-/**
- * Holds one connection in IDLE on the notes mailbox and reports what the
- * server pushes. Reconnects forever with capped, jittered backoff.
- *
- * Events:
- *   'connected'    - the mailbox is open and IDLE is running. Anything may
- *                    have happened while we were away, so the caller should
- *                    run a full pass.
- *   'exists'       - new message(s): an added note, or the new half of an edit.
- *   'expunge'      - a message left: a deleted note, or the old half of an edit.
- *   'status'       - ListenerStatus, for the web page.
- */
 export class IdleListener extends EventEmitter {
   private abort = new AbortController();
   private client: ImapFlow | null = null;
@@ -158,7 +134,6 @@ export class IdleListener extends EventEmitter {
       this.setStatus({ state: 'connecting', attempt, retryInMs: null });
       try {
         await this.session(signal);
-        // A clean close (server restart, network drop, idle timeout): start over quickly.
         attempt = 0;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -173,13 +148,10 @@ export class IdleListener extends EventEmitter {
     }
   }
 
-  /** One connection's lifetime. Resolves when it closes. */
   private async session(signal: AbortSignal): Promise<void> {
     const client = new ImapFlow(
       clientOptions(this.settings, {
-        // This connection never runs anything else, so IDLE can start at once.
         autoIdleDelay: 100,
-        // RFC 2177: re-issue IDLE before 29 minutes or the server may drop us.
         maxIdleTime: this.options.idleRestartMs,
       }),
     );
@@ -195,7 +167,6 @@ export class IdleListener extends EventEmitter {
       await client.mailboxOpen(this.mailbox, { readOnly: true });
     } catch (err) {
       await client.logout().catch(() => undefined);
-      // imapflow keeps the server's own words in responseText ("Mailbox does not exist").
       const e = err as Error & { responseText?: string };
       throw new Error(`cannot open mailbox "${this.mailbox}": ${e.responseText || e.message}`);
     }

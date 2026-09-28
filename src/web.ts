@@ -7,7 +7,6 @@ import type { EventEmitter } from 'node:events';
 import type { NoteStore } from './store.js';
 import { silentLogger, type Logger } from './log.js';
 
-/** The page lives in /public both when running from src (tsx) and from dist. */
 function publicDir(): string {
   const here = path.dirname(fileURLToPath(import.meta.url));
   for (const candidate of [path.join(here, '..', 'public'), path.join(here, '..', '..', 'public')]) {
@@ -17,9 +16,6 @@ function publicDir(): string {
 }
 
 const SECURITY_HEADERS = {
-  // Note bodies are rendered in a sandboxed srcdoc iframe; nothing in them may
-  // run script or load remote content (a tracking pixel in a pasted note would
-  // otherwise report every page view).
   'Content-Security-Policy':
     "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'",
   'X-Content-Type-Options': 'nosniff',
@@ -28,7 +24,6 @@ const SECURITY_HEADERS = {
 
 export interface WebOptions {
   store: NoteStore;
-  /** Emits 'change' (NoteChange), 'resync', and 'status' (anything JSON). */
   events: EventEmitter;
   status: () => unknown;
   log?: Logger;
@@ -39,12 +34,6 @@ function json(res: ServerResponse, status: number, body: unknown): void {
   res.end(JSON.stringify(body));
 }
 
-/**
- * A small read-only HTTP surface: the page, a JSON API, and a server-sent
- * events stream. SSE rather than WebSockets because the traffic is one-way,
- * it goes through any proxy as plain HTTP, and the browser reconnects on its
- * own.
- */
 export function createWebServer({ store, events, status, log = silentLogger }: WebOptions): Server {
   const dir = publicDir();
   const clients = new Set<ServerResponse>();

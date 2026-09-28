@@ -1,8 +1,3 @@
-/**
- * The schema, applied on boot. Every statement is idempotent, so a restart
- * against an existing database is a no-op and there is no migration tool to
- * install for a project this size.
- */
 export const SCHEMA_SQL = `
 create table if not exists notes (
   id            text primary key,          -- X-Universally-Unique-Identifier

@@ -1,11 +1,3 @@
-/**
- * Plays the part of a phone: writes invented notes into the IMAP mailbox the
- * way Apple Notes does, then edits and deletes some of them, pausing between
- * steps so the change is visible on the web page as it happens.
- *
- * An edit is done exactly like the real app: APPEND the new version with the
- * same X-Universally-Unique-Identifier, then expunge the old message.
- */
 import { ImapFlow } from 'imapflow';
 import { buildNoteMessage } from '../src/note-format.js';
 import { DELETES, DEMO_NOTES, EDITS, LATE_ARRIVAL, type DemoNote } from './demo-notes.js';

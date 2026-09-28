@@ -17,7 +17,6 @@ describe('planSync', () => {
   });
 
   it('treats UIDNEXT at or below the watermark as a recreated mailbox, even with the same UIDVALIDITY', () => {
-    // The server recreated the mailbox and kept UIDVALIDITY: new messages start at UID 1 again.
     const stored = { uidValidity: 7, lastUid: 10 };
     expect(planSync(stored, { uidValidity: 7, uidNext: 3, exists: 2 }, t('new-messages'))).toEqual({
       kind: 'full',
@@ -75,7 +74,6 @@ describe('UID arithmetic', () => {
       { uid: 9, done: true },
       { uid: 7, done: true },
     ])).toBe(9);
-    // 7 failed transiently: the mark stops at 5 so 7 (and 9 after it) are fetched again.
     expect(advanceWatermark(4, [
       { uid: 5, done: true },
       { uid: 7, done: false },

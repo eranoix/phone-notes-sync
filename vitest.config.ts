@@ -7,7 +7,6 @@ export default defineConfig({
         test: {
           name: 'unit',
           include: ['test/unit/**/*.test.ts'],
-          // PGlite boots a WASM Postgres; on a busy CI runner that can take a while.
           hookTimeout: 60_000,
           testTimeout: 30_000,
         },

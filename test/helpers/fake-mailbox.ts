@@ -1,17 +1,11 @@
 import type { FetchedMessage, MailboxSession, MailSource } from '../../src/sync.js';
 
-/**
- * An in-memory IMAP mailbox with the semantics that matter here: ascending
- * UIDs that are never reused, immutable messages, and a UIDVALIDITY that can
- * be changed to simulate the server rebuilding the mailbox.
- */
 export class FakeMailbox implements MailSource {
   uidValidity = 1000;
   private uidNext = 1;
   readonly messages = new Map<number, Buffer>();
   opens = 0;
   fetchedUids: number[] = [];
-  /** Answer the next listUids() with nothing, like a misbehaving server. */
   lieAboutUids = false;
 
   append(source: Buffer | string): number {
@@ -24,10 +18,6 @@ export class FakeMailbox implements MailSource {
     this.messages.delete(uid);
   }
 
-  /**
-   * Every message renumbered from 1: what a rebuilt mailbox looks like. With
-   * `keepValidity` it imitates a server that forgets to change UIDVALIDITY.
-   */
   rebuild(keepValidity = false): Map<number, number> {
     const old = [...this.messages.entries()].sort((a, b) => a[0] - b[0]);
     this.messages.clear();
@@ -58,7 +48,6 @@ export class FakeMailbox implements MailSource {
     if (Array.isArray(range)) {
       uids = all.filter((u) => range.includes(u));
     } else {
-      // Real IMAP: `n:*` includes the highest UID even when it is below n.
       uids = all.filter((u) => u >= range.from);
       const last = all[all.length - 1];
       if (uids.length === 0 && last !== undefined) uids = [last];

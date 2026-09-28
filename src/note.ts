@@ -3,7 +3,6 @@ import { simpleParser, type AddressObject } from 'mailparser';
 import { htmlToText, titleFromHtml } from './html.js';
 import { PermanentError } from './queue.js';
 
-/** Apple marks note messages with this Uniform Type Identifier. */
 export const NOTE_UTI = 'com.apple.mail-note';
 
 export interface AttachmentMeta {
@@ -14,7 +13,6 @@ export interface AttachmentMeta {
 }
 
 export interface ParsedNote {
-  /** X-Universally-Unique-Identifier: survives every edit, unlike the UID. */
   id: string;
   title: string;
   html: string;
@@ -22,7 +20,6 @@ export interface ParsedNote {
   createdAt: Date | null;
   modifiedAt: Date;
   attachments: AttachmentMeta[];
-  /** Hash of everything the table stores about the content, used to skip no-op writes. */
   contentHash: string;
 }
 
@@ -48,21 +45,6 @@ function hashNote(n: Omit<ParsedNote, 'contentHash'>): string {
     .digest('hex');
 }
 
-/**
- * Parse one message from the Notes mailbox.
- *
- * The format, as Apple writes it:
- *   - `X-Uniform-Type-Identifier: com.apple.mail-note` marks it as a note.
- *   - `X-Universally-Unique-Identifier` is the note's identity. Editing a note
- *     on the phone APPENDS a new message with the same identifier and expunges
- *     the old one, so the IMAP UID changes on every edit and cannot be the key.
- *   - `Date` is the last modification, `X-Mail-Created-Date` the creation.
- *   - The body is `text/html`, or `multipart/*` with the HTML plus attachments
- *     that the HTML references by `cid:`.
- *
- * Throws `PermanentError` for messages that are not notes: retrying cannot
- * turn a newsletter someone dragged into the folder into a note.
- */
 export async function parseNote(source: Buffer | string): Promise<ParsedNote> {
   const mail = await simpleParser(source, {
     skipImageLinks: true,
@@ -79,7 +61,6 @@ export async function parseNote(source: Buffer | string): Promise<ParsedNote> {
     throw new PermanentError(`unexpected X-Uniform-Type-Identifier "${uti}"`);
   }
 
-  // Plain-text notes exist too (older clients); wrap them so consumers always get HTML.
   let html = typeof mail.html === 'string' ? mail.html : '';
   if (!html && mail.text) {
     html = mail.text
